@@ -1,0 +1,31 @@
+services:
+  mongo:
+    image: mongo:7
+    container_name: kbo_mongo
+    restart: unless-stopped
+    ports:
+      - "27017:27017"        # connectez Compass sur mongodb://localhost:27017
+    volumes:
+      - mongo_data:/data/db
+
+  jupyter:
+    image: jupyter/scipy-notebook:latest
+    container_name: kbo_jupyter
+    restart: unless-stopped
+    depends_on:
+      - mongo
+    ports:
+      - "8888:8888"          # http://localhost:8888/?token=kbo
+    environment:
+      MONGO_URI: mongodb://mongo:27017
+      MONGO_DB: kbo
+      DATA_DIR: /data/kbo
+      JUPYTER_TOKEN: kbo
+    volumes:
+      - ./notebooks:/home/jovyan/work
+      - ./data/kbo:/data/kbo:ro
+    command: >
+      bash -c "pip install --quiet pymongo && start-notebook.sh --NotebookApp.token='kbo'"
+
+volumes:
+  mongo_data:
